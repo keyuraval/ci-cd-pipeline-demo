@@ -28,4 +28,4 @@ jobs:
         run: echo "Deploying the application..."
 
       - name: Trigger Render Deployment
-      run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
