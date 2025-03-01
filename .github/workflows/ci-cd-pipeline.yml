@@ -27,5 +27,10 @@ jobs:
       - name: Deploy (Example Step)
         run: echo "Deploying the application..."
 
-      - name: Trigger Render Deployment
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Trigger Render Deployment via API
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Accept: application/json" \
+          -H "Content-Type: application/json"
+
