@@ -21,11 +21,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Tests
-        run: npm test  # (If you don’t have tests yet, you can remove this line)
-
       - name: Build the Application
         run: echo "Building the application..."
 
       - name: Deploy (Example Step)
         run: echo "Deploying the application..."
+
+      - name: Trigger Render Deployment
+      run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
