@@ -25,18 +25,22 @@ jobs:
         run: |
           npm install
 
-      # Deploy to EC2 (ensure that the private key is available)
+      # Deploy to EC2
       - name: Deploy to EC2
         env:
           DEPLOYMENT_SERVER: ${{ secrets.EC2_IP }}
           DEPLOYMENT_USER: ${{ secrets.EC2_USER }}
           SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}
         run: |
+          # Set up SSH key and directory
           mkdir -p ~/.ssh
           echo "$SSH_KEY_PATH" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+
+          # Disable strict host checking (useful for new EC2 instances)
+          echo "$DEPLOYMENT_SERVER" >> ~/.ssh/known_hosts
           
-          # Direct SSH connection without using ssh-keyscan
+          # Run deployment commands
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
             cd /home/ubuntu/your_project_directory
             git pull origin main
