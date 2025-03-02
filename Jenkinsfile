@@ -26,28 +26,51 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                // SSH into EC2 and deploy code from the specified branch
-                sh '''
-                set -e
-                ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER "bash -s" <<'EOF'
-                    # Navigate to the project directory
-                    cd $PROJECT_DIRECTORY
-                    
-                    # Pull the latest changes from Git
-                    git pull origin $BRANCH_NAME
-                    
-                    # Install dependencies
-                    npm install
-                    
-                    # Ensure pm2 is installed and restart the app
-                    if ! which pm2 > /dev/null; then
-                        sudo npm install -g pm2
-                    fi
-                    
-                    # Restart the application using PM2
-                    pm2 restart server.js || pm2 start server.js --name app_name
-                EOF
-                '''
+                script {
+                    def sshCommand = """
+                        #!/bin/bash
+                        set -e
+
+                        # Debug: Check if project directory exists and is a git repository
+                        if [ ! -d "$PROJECT_DIRECTORY" ]; then
+                            echo "Cloning repository into $PROJECT_DIRECTORY"
+                            git clone https://github.com/keyuraval/ci-cd-pipeline-demo.git $PROJECT_DIRECTORY
+                        else
+                            echo "Project directory exists, pulling latest changes"
+                            cd $PROJECT_DIRECTORY
+                            git pull origin $BRANCH_NAME
+                        fi
+
+                        # Debug: Check git status and files
+                        echo "Git Status and Files:"
+                        cd $PROJECT_DIRECTORY
+                        git status
+                        ls -l
+
+                        # Install npm dependencies
+                        echo "Installing npm dependencies"
+                        npm install
+
+                        # Ensure pm2 is installed
+                        echo "Checking for pm2"
+                        if ! which pm2 > /dev/null; then
+                            echo "pm2 not found, installing..."
+                            sudo npm install -g pm2
+                        fi
+
+                        # Restart the application using PM2
+                        echo "Restarting PM2 application"
+                        pm2 restart server.js || pm2 start server.js --name app_name
+                    """
+
+                    writeFile file: 'deploy.sh', text: sshCommand
+
+                    // Execute the deploy script via SSH
+                    sh """
+                    scp -i $SSH_KEY_PATH deploy.sh $DEPLOYMENT_USER@$DEPLOYMENT_SERVER:/home/ubuntu/deploy.sh
+                    ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER 'bash /home/ubuntu/deploy.sh'
+                    """
+                }
             }
         }
     }
