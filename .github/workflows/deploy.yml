@@ -31,26 +31,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_KEY_PATH" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Make sure to replace $DEPLOYMENT_SERVER with your EC2 IP or hostname
           ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
 
-      # Deploy to EC2
+      # Deploy to EC2 (ensure that the private key is available)
       - name: Deploy to EC2
         env:
-          DEPLOYMENT_SERVER: ${{ secrets.EC2_IP }}
+          DEPLOYMENT_SERVER: ${{ secrets.EC2_IP }}  # EC2 public IP or hostname from Secrets
           DEPLOYMENT_USER: ${{ secrets.EC2_USER }}
-          SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}
+          SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}  # Private key from Secrets
         run: |
-          # SSH to EC2 and deploy
           ssh -i ~/.ssh/deploy_key $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
-            # Navigate to the project directory
             cd /home/ubuntu/your_project_directory
-
-            # Pull latest code from the 'main' branch
             git pull origin main
-
-            # Install dependencies (in case there are new ones)
             npm install
-
-            # Restart or start the server using PM2
             pm2 restart server || pm2 start server.js --name "server"
           EOF
