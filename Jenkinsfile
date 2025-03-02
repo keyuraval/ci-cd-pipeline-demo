@@ -28,7 +28,7 @@ pipeline {
             steps {
                 // SSH into EC2 and deploy code from the specified branch
                 sh '''
-                ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
+                ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER <<EOF
                     # Navigate to the project directory
                     cd $PROJECT_DIRECTORY
                     
