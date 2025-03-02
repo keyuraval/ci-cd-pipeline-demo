@@ -1,31 +1,49 @@
 pipeline {
     agent any
+    
+    environment {
+        DEPLOYMENT_SERVER = "18.212.48.169"
+        DEPLOYMENT_USER = "ubuntu"
+        SSH_KEY_PATH = "/var/lib/jenkins/.ssh/keyur_key.pem"
+        BRANCH_NAME = "main" // Define the branch name you want to deploy
+    }
 
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/keyuraval/ci-cd-pipeline-demo.git'
+                // Checkout the code from the specified branch
+                git branch: "$BRANCH_NAME", url: 'https://github.com/keyuraval/ci-cd-pipeline-demo.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                sh 'docker build -t keyuraval03/ci-cd-pipeline-demo .'
+                // Install dependencies (for Node.js app)
+                sh 'npm install'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Deploy to EC2') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    sh 'docker push keyuraval03/ci-cd-pipeline-demo'
-                }
+                // SSH into EC2 and deploy code from the specified branch
+                sh '''
+                ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
+                    cd /home/ubuntu/your_project_directory
+                    git pull origin $BRANCH_NAME
+                    npm install
+                    pm2 restart app_name
+                EOF
+                '''
             }
         }
+    }
 
-        stage('Deploy with Ansible') {
-            steps {
-                sh 'ansible-playbook -i hosts.ini deploy.yml'
-            }
+    post {
+        success {
+            echo 'Build and deployment completed successfully.'
+        }
+        failure {
+            echo 'Build or deployment failed.'
         }
     }
 }
