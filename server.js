@@ -1,11 +1,12 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${port}`);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello, World! This is our CI/CD pipeline demo.with jenkins");
 });
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server running on port 3000');
-});
