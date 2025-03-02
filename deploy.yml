@@ -1,0 +1,16 @@
+---
+- name: Deploy Application
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Pull latest Docker image
+      command: docker pull keyuraval03/ci-cd-pipeline-demo:latest
+
+    - name: Stop and remove existing container
+      command: docker rm -f my-app-container
+      ignore_errors: yes  # Ignore if the container doesn't exist
+
+    - name: Run new Docker container
+      command: >
+        docker run -d --name my-app-container -p 80:3000 keyuraval03/ci-cd-pipeline-demo:latest
