@@ -1,0 +1,40 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main  # Trigger this action on push to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code from GitHub repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment (you can specify a version)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+      # Deploy to EC2 (ensure that the private key is available)
+      - name: Deploy to EC2
+        env:
+          DEPLOYMENT_SERVER: ${{ secrets.EC2_IP }}
+          DEPLOYMENT_USER: ${{ secrets.EC2_USER }}
+          SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
+            cd /home/ubuntu/your_project_directory
+            git pull origin main
+            npm install
+            pm2 restart server || pm2 start server.js --name "server"
+          EOF
