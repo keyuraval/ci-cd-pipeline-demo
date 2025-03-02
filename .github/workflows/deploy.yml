@@ -25,16 +25,32 @@ jobs:
         run: |
           npm install
 
-      # Deploy to EC2 (ensure that the private key is available)
+      # Set up SSH key and known hosts for secure SSH access
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY_PATH" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -t rsa $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
+
+      # Deploy to EC2
       - name: Deploy to EC2
         env:
           DEPLOYMENT_SERVER: ${{ secrets.EC2_IP }}
           DEPLOYMENT_USER: ${{ secrets.EC2_USER }}
           SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          ssh -i $SSH_KEY_PATH $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
+          # SSH to EC2 and deploy
+          ssh -i ~/.ssh/deploy_key $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
+            # Navigate to the project directory
             cd /home/ubuntu/your_project_directory
+
+            # Pull latest code from the 'main' branch
             git pull origin main
+
+            # Install dependencies (in case there are new ones)
             npm install
+
+            # Restart or start the server using PM2
             pm2 restart server || pm2 start server.js --name "server"
           EOF
