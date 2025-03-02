@@ -18,7 +18,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                // Install dependencies (for Node.js app)
+                sh 'export PATH=$PATH:/usr/local/bin'
                 sh 'npm install'
             }
         }
