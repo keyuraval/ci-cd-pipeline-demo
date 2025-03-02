@@ -31,7 +31,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_KEY_PATH" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # Make sure to replace $DEPLOYMENT_SERVER with your EC2 IP or hostname
+          # Ensure $DEPLOYMENT_SERVER is correctly set from GitHub Secrets
+          echo "Adding $DEPLOYMENT_SERVER to known hosts"
           ssh-keyscan -H $DEPLOYMENT_SERVER >> ~/.ssh/known_hosts
 
       # Deploy to EC2 (ensure that the private key is available)
@@ -41,6 +42,7 @@ jobs:
           DEPLOYMENT_USER: ${{ secrets.EC2_USER }}
           SSH_KEY_PATH: ${{ secrets.EC2_SSH_KEY }}  # Private key from Secrets
         run: |
+          echo "Connecting to EC2 instance at $DEPLOYMENT_SERVER"
           ssh -i ~/.ssh/deploy_key $DEPLOYMENT_USER@$DEPLOYMENT_SERVER << EOF
             cd /home/ubuntu/your_project_directory
             git pull origin main
